@@ -100,6 +100,39 @@
 make spec && cd server && npx tsc --noEmit && cd ../web && npm run build
 ```
 
+### Автоматизированная проверка в браузере
+
+После успешной сборки выполнить проверку через Chrome DevTools MCP-инструменты:
+
+**1. Роутинг** — для каждого URL из таблицы ниже:
+```
+navigate_page → url
+take_snapshot → сверить заголовок страницы с ожидаемым
+list_console_messages → убедиться, что нет красных ошибок и 404 на критичных ресурсах
+```
+
+**2. Интерактивность форм:**
+- **Event Type Create:** `fill` Title → `take_snapshot` → Slug автогенерирован
+- **Availability:** `click` на Time Select → `evaluate_script` проверяет `[role="option"]` (48 опций: 00:00–23:30)
+
+**3. Booking flow:**
+- `navigate_page` → `/book/alex/:slug` → `take_snapshot`: есть дата и слоты
+- `click` по слоту → `take_snapshot`: появилась форма гостя (2 текстовых поля + кнопка Confirm)
+
+**4. Layout:**
+- `/dashboard*`: `take_snapshot` → видна боковая панель (Event Types / Availability)
+- `/book/*`: `take_snapshot` → боковая панель скрыта
+
+| URL | Компонент | Заголовок |
+|---|---|---|
+| `/dashboard` | DashboardPage | "Your Event Types" |
+| `/dashboard/availability` | AvailabilityPage | "Availability" |
+| `/dashboard/event-types/new` | EventTypeCreatePage | "New Event Type" |
+| `/book/alex/:slug` | BookingPage | Название ивента |
+| `/book/alex/:slug/confirmed/:bookingId` | ConfirmedPage | "You're booked!" |
+
+> **⚠ Prism-моки:** при прокси на `:4010` API возвращает значения-заглушки из OpenAPI-примера (`"string"`, `-9007199254740991`, `"2019-08-24T14:15:22Z"`). Это ожидаемо. Для проверки с реальными данными — запустить `make dev-backend` и переключить прокси в `web/vite.config.ts` на `:3000`.
+
 ## 7. Dev Workflow
 
 ### Против моков (Prism) — фронтенд без бэкенда
