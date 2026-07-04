@@ -1,0 +1,431 @@
+openapi: 3.0.0
+info:
+  title: cal-work API
+  version: 0.0.0
+tags: []
+paths:
+  /api/availability:
+    get:
+      operationId: AvailabilityRoutes_read
+      description: Get the current user's weekly availability.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Availability'
+    put:
+      operationId: AvailabilityRoutes_upsert
+      description: Create or replace the current user's availability.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Availability'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityUpdate'
+  /api/book/{username}/{slug}:
+    post:
+      operationId: Book_create
+      description: Create a booking for a free slot.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreate'
+  /api/book/{username}/{slug}/slots:
+    get:
+      operationId: Book_slots
+      description: List free time slots for a given event type.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          explode: false
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotsResponse'
+  /api/bookings/{bookingId}:
+    get:
+      operationId: Bookings_read
+      description: Get booking details by ID.
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+  /api/event-types:
+    get:
+      operationId: EventTypes_list
+      description: List all event types for the current user.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+    post:
+      operationId: EventTypes_create
+      description: Create a new event type.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeCreate'
+  /api/event-types/{eventTypeId}:
+    get:
+      operationId: EventTypes_read
+      description: Get a single event type by ID.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+    patch:
+      operationId: EventTypes_update
+      description: Update an existing event type.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTypeUpdate'
+    delete:
+      operationId: EventTypes_delete
+      description: Delete an event type.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+components:
+  schemas:
+    Availability:
+      type: object
+      required:
+        - id
+        - userId
+        - slots
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        userId:
+          type: string
+          description: The user this availability belongs to.
+          readOnly: true
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailabilitySlot'
+          description: JSON array of time windows per day of week.
+      description: Weekly availability schedule for a host.
+    AvailabilitySlot:
+      type: object
+      required:
+        - dayOfWeek
+        - start
+        - end
+      properties:
+        dayOfWeek:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 7
+          description: 1 = Monday … 7 = Sunday.
+        start:
+          type: string
+          pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          description: Start time in HH:mm format (host's timezone).
+        end:
+          type: string
+          pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          description: End time in HH:mm format (host's timezone).
+      description: A single time window on a specific day of the week.
+    AvailabilityUpdate:
+      type: object
+      required:
+        - slots
+      properties:
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/AvailabilitySlot'
+    Booking:
+      type: object
+      required:
+        - id
+        - eventTypeId
+        - guestName
+        - guestEmail
+        - startTime
+        - endTime
+        - timezone
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        eventTypeId:
+          type: integer
+          format: int64
+          description: The event type that was booked.
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        guestName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Guest's name.
+        guestEmail:
+          type: string
+          format: email
+          description: Guest's email.
+        startTime:
+          type: string
+          format: date-time
+          description: Booking start time in UTC.
+        endTime:
+          type: string
+          format: date-time
+          description: Booking end time in UTC.
+        timezone:
+          type: string
+          description: Host's timezone at the time of booking.
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+      description: A booking made by a guest for a specific event type.
+    BookingCreate:
+      type: object
+      required:
+        - startTime
+        - guestName
+        - guestEmail
+      properties:
+        startTime:
+          type: string
+          format: date-time
+          description: Slot start time in UTC.
+        guestName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Guest's full name.
+        guestEmail:
+          type: string
+          format: email
+          description: Guest's email address.
+    EventType:
+      type: object
+      required:
+        - id
+        - title
+        - slug
+        - duration
+        - userId
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Short title (e.g. "30 Minute Consultation").
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[a-z0-9-]+$
+          description: URL-friendly identifier, unique per user (e.g. "30min").
+        description:
+          type: string
+          maxLength: 5000
+          description: Optional longer description.
+        duration:
+          type: integer
+          format: int64
+          minimum: 15
+          maximum: 60
+          description: Meeting duration in minutes.
+        userId:
+          type: string
+          description: The user who owns this event type.
+          readOnly: true
+      description: A meeting template created by the host.
+    EventTypeCreate:
+      type: object
+      required:
+        - title
+        - slug
+        - duration
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: ^[a-z0-9-]+$
+        description:
+          type: string
+          maxLength: 5000
+        duration:
+          type: integer
+          format: int64
+          minimum: 15
+          maximum: 60
+    EventTypeUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        duration:
+          type: integer
+          format: int64
+          minimum: 15
+          maximum: 60
+    SlotsResponse:
+      type: object
+      required:
+        - eventType
+        - timezone
+        - slots
+      properties:
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        timezone:
+          type: string
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlot'
+    TimeSlot:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Slot start in UTC.
+        end:
+          type: string
+          format: date-time
+          description: Slot end in UTC.
+      description: A single free time slot returned by the slots endpoint.
