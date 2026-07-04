@@ -23,7 +23,7 @@ mock: spec      ## Start Prism mock server on port 4010
 dev: spec       ## Start frontend dev server (requires `make mock` in another terminal)
 	cd web && npm run dev
 
-dev-backend:    ## Start Express backend (after implementation)
+dev-backend:    ## Start Express backend on :3000
 	cd server && npm run dev
 
 # ─── Build ─────────────────────────────────────────────────
@@ -57,8 +57,8 @@ clean:          ## Remove build artifacts and dependencies
 	rm -rf node_modules server/node_modules web/node_modules
 
 db-reset:       ## Reset SQLite database (delete data.db)
-	rm -f server/data.db
-	cd server && npx drizzle-kit migrate
+	rm -f server/data.db server/data.db-wal server/data.db-shm
+	cd server && npx drizzle-kit push
 
 # ─── All-in-One ────────────────────────────────────────────
 
