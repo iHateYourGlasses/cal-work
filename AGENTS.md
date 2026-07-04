@@ -88,9 +88,10 @@
 | -------------------------------- | ------------------------------------------------ |
 | Компиляция TypeSpec              | `make spec`                                      |
 | Типы сервера (TypeScript)        | `cd server && npx tsc --noEmit`                  |
-| Типы фронтенда (TypeScript)      | `cd web && npx tsc`                              |
 | Сборка фронтенда (tsc + Vite)    | `cd web && npm run build`                        |
 | Сборка сервера (tsc → dist/)     | `cd server && npm run build`                     |
+| Runtime-валидация API            | `express-openapi-validator` (включён в `server/src/index.ts`, валидирует все запросы/ответы против `openapi.yaml`) |
+| Автотесты бэкенда                | `make test` (vitest + supertest)                 |
 | Полная кодогенерация             | `make types`                                     |
 | TypeSpec watch                   | `make spec-watch`                                |
 | Сброс БД                         | `make db-reset`                                  |
