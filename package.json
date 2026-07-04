@@ -6,23 +6,15 @@
   "type": "module",
   "scripts": {
     "tsp:compile": "tsp compile .",
-    "tsp:watch": "tsp compile . --watch",
-    "build": "tsc",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js"
+    "tsp:watch": "tsp compile . --watch"
   },
   "keywords": [],
   "author": "",
   "license": "UNLICENSED",
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@typespec/compiler": "^1.13.0",
     "@typespec/http": "^1.13.0",
     "@typespec/openapi3": "^1.13.0",
-    "tsx": "^4.23.0",
     "typescript": "^6.0.3"
-  },
-  "dependencies": {
-    "express": "^5.2.1"
   }
 }
