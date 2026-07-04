@@ -11,18 +11,11 @@ import {
   Text,
   ActionIcon,
   Box,
-  Collapse,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import {
-  IconCopy,
-  IconChevronDown,
-  IconChevronUp,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconCopy, IconPlus } from "@tabler/icons-react";
 import { api } from "../api/client";
 import type { paths } from "../types/api";
-import { AvailabilityEditor } from "../components/AvailabilityEditor";
 
 type EventType =
   paths["/api/event-types"]["get"]["responses"]["200"]["content"]["application/json"][number];
@@ -31,7 +24,6 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [availOpen, setAvailOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -111,27 +103,6 @@ export function DashboardPage() {
           ))}
         </Stack>
       )}
-
-      <Box mt="xl">
-        <Group
-          justify="space-between"
-          mb="md"
-          style={{ cursor: "pointer" }}
-          onClick={() => setAvailOpen(!availOpen)}
-        >
-          <Title order={2}>Availability</Title>
-          <ActionIcon variant="subtle" color="gray">
-            {availOpen ? (
-              <IconChevronUp size={20} />
-            ) : (
-              <IconChevronDown size={20} />
-            )}
-          </ActionIcon>
-        </Group>
-        <Collapse expanded={availOpen}>
-          <AvailabilityEditor />
-        </Collapse>
-      </Box>
     </Container>
   );
 }

@@ -5,6 +5,7 @@ import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { Layout } from "./components/Layout";
 import { DashboardPage } from "./pages/DashboardPage";
+import { AvailabilityPage } from "./pages/AvailabilityPage";
 import { EventTypeCreatePage } from "./pages/EventTypeCreatePage";
 import { BookingPage } from "./pages/BookingPage";
 import { ConfirmedPage } from "./pages/ConfirmedPage";
@@ -20,6 +21,10 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route
+              path="/dashboard/availability"
+              element={<AvailabilityPage />}
+            />
             <Route
               path="/dashboard/event-types/new"
               element={<EventTypeCreatePage />}
