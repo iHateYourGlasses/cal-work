@@ -263,7 +263,6 @@ components:
         - guestEmail
         - startTime
         - endTime
-        - timezone
         - createdAt
       properties:
         id:
@@ -293,9 +292,6 @@ components:
           type: string
           format: date-time
           description: Booking end time in UTC.
-        timezone:
-          type: string
-          description: Host's timezone at the time of booking.
         createdAt:
           type: string
           format: date-time

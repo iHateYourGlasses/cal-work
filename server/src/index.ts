@@ -1,6 +1,9 @@
 import express from "express";
 import { middleware } from "express-openapi-validator";
 import { initDb } from "./db/index.js";
+import { eventTypesRouter } from "./routes/eventTypes.js";
+import { availabilityRouter } from "./routes/availability.js";
+import { bookingRouter } from "./routes/booking.js";
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +15,10 @@ app.use(express.json());
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use("/api/event-types", eventTypesRouter);
+app.use("/api/availability", availabilityRouter);
+app.use("/api", bookingRouter);
 
 app.use(
   middleware({

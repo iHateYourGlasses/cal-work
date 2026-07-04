@@ -165,8 +165,6 @@ export interface components {
              * @description Booking end time in UTC.
              */
             endTime: string;
-            /** @description Host's timezone at the time of booking. */
-            timezone: string;
             /** Format: date-time */
             readonly createdAt: string;
         };

@@ -10,6 +10,7 @@ import {
   ThemeIcon,
   Stack,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { IconCircleCheck } from "@tabler/icons-react";
 import { api } from "../api/client";
 import type { paths } from "../types/api";
@@ -27,7 +28,13 @@ export function ConfirmedPage() {
     api
       .fetchBooking(Number(bookingId))
       .then(setBooking)
-      .catch(() => {})
+      .catch((err) => {
+        notifications.show({
+          title: "Error",
+          message: String(err),
+          color: "red",
+        });
+      })
       .finally(() => setLoading(false));
   }, [bookingId]);
 

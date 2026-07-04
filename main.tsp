@@ -121,9 +121,6 @@ model Booking {
   /** Booking end time in UTC. */
   endTime: utcDateTime;
 
-  /** Host's timezone at the time of booking. */
-  timezone: string;
-
   @visibility(Lifecycle.Read)
   createdAt: utcDateTime;
 }
