@@ -198,3 +198,79 @@ Add configurable buffer time before and after each meeting. A 5-minute buffer af
 ### Blocked by
 
 None — can start immediately.
+
+---
+
+## #8: Error-контракт для booking-роутов в API-спеке
+
+### What to build
+
+Добавить в `main.tsp` shared error-модель и error-ответы (404, 400, 409) для booking-роутов, чтобы API-контракт был полным. Сейчас `openapi.yaml` не определяет эти ответы — express-openapi-validator считает их нарушениями, а тестам приходится отключать `validateResponses`.
+
+**Спека (main.tsp):**
+- Добавить модель `ApiError { code: string; message: string }`
+- Добавить 404/400/409 ответы в `POST /api/book/{username}/{slug}` и `GET .../slots`
+
+**После регенерации:**
+- `make spec` → `openapi.yaml`
+- `make types` → `web/src/types/api.ts`
+
+**Тесты:**
+- Убрать `createApp({ validateResponses: false })`, перейти на `createApp()` с `validateResponses: true`
+- Убедиться что 404/409/400 тесты проходят с валидацией ответов
+
+### Acceptance criteria
+
+- [ ] `main.tsp` определяет 404/409/400 ответы для booking-роутов
+- [ ] `openapi.yaml` регенерирован
+- [ ] `web/src/types/api.ts` регенерирован
+- [ ] Интеграционные тесты проходят с `validateResponses: true` (без `createApp({ validateResponses: false })`)
+
+### Blocked by
+
+None — can start immediately.
+
+---
+
+## #9: Валидация слота на принадлежность окну доступности в POST /book
+
+### What to build
+
+В `POST /api/book/:username/:slug` добавить проверку, что запрошенный слот попадает в одно из окон доступности хозяина. Сейчас проверяется только minimumBookingNotice и конфликты с существующими букингами, но слот вне рабочего времени хозяина может быть забукан.
+
+**Бэкенд:**
+- В хендлере POST `/book/:username/:slug` после получения availability: проверить, что `startTime` попадает хотя бы в одно окно доступности (через `computeFreeSlots` для этого конкретного слота или прямым перебором `availability.slots`)
+- Если не попадает → 400 `"Slot is outside host availability"`
+- Добавить тест-кейс
+
+### Acceptance criteria
+
+- [ ] POST `/book` возвращает 400 если слот не входит ни в одно окно доступности
+- [ ] POST `/book` возвращает 201 если слот в рамках доступности
+- [ ] Интеграционные тесты покрывают оба сценария
+
+### Blocked by
+
+None — but having #8 done first makes the 400 response contract-compliant.
+
+---
+
+## #10: Чистка test-infrastructure: дедупликация seed'а, таймеры, константы
+
+### What to build
+
+Навести порядок в тестовой инфраструктуре из трёх мелких проблем:
+
+1. **Дедупликация seed'а**: `helpers.ts` вручную INSERT'ит дефолтного юзера (дублирует `seed.ts`) — заменить на вызов `seed(getSqlite())`
+2. **Избыточные таймеры**: в `slotService.test.ts` и `beforeEach`, и `afterEach` вызывают `vi.useRealTimers()` — убрать `beforeEach`
+3. **Magic strings**: `"2026-07-06T00:00:00Z"` и аналогичные повторяются в каждом тесте — вынести в именованные константы
+
+### Acceptance criteria
+
+- [ ] `helpers.ts` вызывает `seed()` вместо ручного INSERT
+- [ ] `slotService.test.ts` убран избыточный `beforeEach`
+- [ ] Тестовые даты вынесены в константы
+
+### Blocked by
+
+None — can start immediately.

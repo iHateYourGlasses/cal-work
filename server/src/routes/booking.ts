@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, and, lt, gt } from "drizzle-orm";
 import { DateTime } from "luxon";
-import { db } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { users, eventTypes, availability, bookings } from "../db/schema.js";
 import { computeFreeSlots } from "../services/slotService.js";
 
@@ -18,7 +18,7 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
       return;
     }
 
-    const user = db
+    const user = getDb()
       .select()
       .from(users)
       .where(eq(users.username, username))
@@ -29,7 +29,7 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
       return;
     }
 
-    const eventType = db
+    const eventType = getDb()
       .select()
       .from(eventTypes)
       .where(
@@ -45,13 +45,13 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
       return;
     }
 
-    const avail = db
+    const avail = getDb()
       .select()
       .from(availability)
       .where(eq(availability.userId, username))
       .get();
 
-    const existingBookings = db
+    const existingBookings = getDb()
       .select({ startTime: bookings.startTime, endTime: bookings.endTime })
       .from(bookings)
       .where(
@@ -95,7 +95,7 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
     const { username, slug } = req.params;
     const { startTime, guestName, guestEmail } = req.body;
 
-    const user = db
+    const user = getDb()
       .select()
       .from(users)
       .where(eq(users.username, username))
@@ -106,7 +106,7 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
       return;
     }
 
-    const eventType = db
+    const eventType = getDb()
       .select()
       .from(eventTypes)
       .where(
@@ -131,7 +131,7 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
       return;
     }
 
-    const overlapping = db
+    const overlapping = getDb()
       .select()
       .from(bookings)
       .where(
@@ -148,7 +148,7 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
       return;
     }
 
-    const row = db
+    const row = getDb()
       .insert(bookings)
       .values({
         eventTypeId: eventType.id,
@@ -185,14 +185,14 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
 
 bookingRouter.get("/bookings", (req, res, next) => {
   try {
-    const user = db.select().from(users).where(eq(users.username, "alex")).get();
+    const user = getDb().select().from(users).where(eq(users.username, "alex")).get();
 
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
 
-    const all = db
+    const all = getDb()
       .select({
         booking: bookings,
         eventType: eventTypes,
@@ -231,7 +231,7 @@ bookingRouter.get("/bookings/:bookingId", (req, res, next) => {
   try {
     const bookingId = Number(req.params.bookingId);
 
-    const booking = db
+    const booking = getDb()
       .select()
       .from(bookings)
       .where(eq(bookings.id, bookingId))
@@ -242,7 +242,7 @@ bookingRouter.get("/bookings/:bookingId", (req, res, next) => {
       return;
     }
 
-    const eventType = db
+    const eventType = getDb()
       .select()
       .from(eventTypes)
       .where(eq(eventTypes.id, booking.eventTypeId))

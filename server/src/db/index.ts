@@ -1,12 +1,12 @@
-import Database from "better-sqlite3";
+import Database, { type Database as SqliteDb } from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema.js";
 import { seed } from "./seed.js";
 
-const sqlite = new Database("data.db");
-sqlite.pragma("journal_mode = WAL");
+let _db: ReturnType<typeof drizzle<typeof schema>>;
+let _sqlite: SqliteDb;
 
-sqlite.exec(`
+const DDL = `
   CREATE TABLE IF NOT EXISTS users (
     username TEXT PRIMARY KEY NOT NULL,
     display_name TEXT NOT NULL,
@@ -39,16 +39,30 @@ sqlite.exec(`
     end_time TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
-`);
+`;
 
-try {
-  sqlite.exec(`ALTER TABLE event_types ADD COLUMN minimum_booking_notice INTEGER NOT NULL DEFAULT 240`);
-} catch {
-  // column already exists
+const MIGRATION = `ALTER TABLE event_types ADD COLUMN minimum_booking_notice INTEGER NOT NULL DEFAULT 240`;
+
+export function getDb() {
+  if (!_db) {
+    const dbPath = process.env.DB_PATH || "data.db";
+    _sqlite = new Database(dbPath);
+    if (dbPath !== ":memory:") {
+      _sqlite.pragma("journal_mode = WAL");
+    }
+    _sqlite.exec(DDL);
+    try {
+      _sqlite.exec(MIGRATION);
+    } catch {
+      // column already exists
+    }
+    _db = drizzle(_sqlite, { schema });
+    seed(_sqlite);
+  }
+  return _db;
 }
 
-export const db = drizzle(sqlite, { schema });
-
-export function initDb() {
-  seed(sqlite);
+export function getSqlite(): SqliteDb {
+  getDb();
+  return _sqlite!;
 }

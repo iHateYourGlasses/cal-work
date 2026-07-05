@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
-import { db } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { eventTypes } from "../db/schema.js";
 
 const HARDCODED_USER = "alex";
@@ -9,7 +9,7 @@ export const eventTypesRouter = Router();
 
 eventTypesRouter.get("/", (_req, res, next) => {
   try {
-    const rows = db
+    const rows = getDb()
       .select()
       .from(eventTypes)
       .where(eq(eventTypes.userId, HARDCODED_USER))
@@ -34,7 +34,7 @@ eventTypesRouter.post("/", (req, res, next) => {
   try {
     const { title, slug, description, duration } = req.body;
 
-    const row = db
+    const row = getDb()
       .insert(eventTypes)
       .values({
         userId: HARDCODED_USER,
@@ -63,7 +63,7 @@ eventTypesRouter.get("/:eventTypeId", (req, res, next) => {
   try {
     const id = Number(req.params.eventTypeId);
 
-    const row = db
+    const row = getDb()
       .select()
       .from(eventTypes)
       .where(eq(eventTypes.id, id))
@@ -92,7 +92,7 @@ eventTypesRouter.patch("/:eventTypeId", (req, res, next) => {
     const id = Number(req.params.eventTypeId);
     const { title, description, duration } = req.body;
 
-    const existing = db
+    const existing = getDb()
       .select()
       .from(eventTypes)
       .where(eq(eventTypes.id, id))
@@ -103,7 +103,7 @@ eventTypesRouter.patch("/:eventTypeId", (req, res, next) => {
       return;
     }
 
-    const row = db
+    const row = getDb()
       .update(eventTypes)
       .set({
         title: title ?? existing.title,
@@ -131,7 +131,7 @@ eventTypesRouter.delete("/:eventTypeId", (req, res, next) => {
   try {
     const id = Number(req.params.eventTypeId);
 
-    const existing = db
+    const existing = getDb()
       .select()
       .from(eventTypes)
       .where(eq(eventTypes.id, id))
@@ -142,7 +142,7 @@ eventTypesRouter.delete("/:eventTypeId", (req, res, next) => {
       return;
     }
 
-    db.delete(eventTypes).where(eq(eventTypes.id, id)).run();
+    getDb().delete(eventTypes).where(eq(eventTypes.id, id)).run();
     res.status(204).end();
   } catch (err) {
     next(err);

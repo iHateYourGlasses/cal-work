@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
-import { db } from "../db/index.js";
+import { getDb } from "../db/index.js";
 import { availability } from "../db/schema.js";
 
 const HARDCODED_USER = "alex";
@@ -9,7 +9,7 @@ export const availabilityRouter = Router();
 
 availabilityRouter.get("/", (_req, res, next) => {
   try {
-    const row = db
+    const row = getDb()
       .select()
       .from(availability)
       .where(eq(availability.userId, HARDCODED_USER))
@@ -29,26 +29,26 @@ availabilityRouter.put("/", (req, res, next) => {
   try {
     const { slots } = req.body;
 
-    const existing = db
+    const existing = getDb()
       .select()
       .from(availability)
       .where(eq(availability.userId, HARDCODED_USER))
       .get();
 
     if (existing) {
-      db
+      getDb()
         .update(availability)
         .set({ slots })
         .where(eq(availability.userId, HARDCODED_USER))
         .run();
     } else {
-      db
+      getDb()
         .insert(availability)
         .values({ userId: HARDCODED_USER, slots })
         .run();
     }
 
-    const row = db
+    const row = getDb()
       .select()
       .from(availability)
       .where(eq(availability.userId, HARDCODED_USER))
