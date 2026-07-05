@@ -212,6 +212,7 @@ namespace CalWorkApi {
 
     /** Create a new event type. */
     @post op create(@body body: EventTypeCreate): {
+      @statusCode _: 201;
       @body body: EventType;
     };
 
