@@ -136,6 +136,34 @@ model TimeSlot {
   end: utcDateTime;
 }
 
+/**
+ * A date-specific override for a host's availability (block entire day or set custom hours).
+ */
+model DateOverride {
+  @visibility(Lifecycle.Read)
+  id: safeint;
+
+  /** Date in YYYY-MM-DD format (host's timezone). */
+  @format("date")
+  date: string;
+
+  /** Override type: "blocked" or "custom". */
+  @pattern("^(blocked|custom)$")
+  type: string;
+
+  /** Start time in HH:mm format (host's timezone). Required when type is "custom". */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  start?: string;
+
+  /** End time in HH:mm format (host's timezone). Required when type is "custom". */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  end?: string;
+
+  /** The user this override belongs to. */
+  @visibility(Lifecycle.Read)
+  userId: string;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // REQUEST / RESPONSE PAYLOADS
 // ═══════════════════════════════════════════════════════════════
@@ -187,6 +215,24 @@ model BookingCreate {
   /** Guest's email address. */
   @format("email")
   guestEmail: string;
+}
+
+model DateOverrideCreate {
+  /** Date in YYYY-MM-DD format (host's timezone). */
+  @format("date")
+  date: string;
+
+  /** Override type: "blocked" or "custom". */
+  @pattern("^(blocked|custom)$")
+  type: string;
+
+  /** Start time in HH:mm format (host's timezone). Required when type is "custom". */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  start?: string;
+
+  /** End time in HH:mm format (host's timezone). Required when type is "custom". */
+  @pattern("^([01]\\d|2[0-3]):[0-5]\\d$")
+  end?: string;
 }
 
 model SlotsResponse {
@@ -251,6 +297,24 @@ namespace CalWorkApi {
     /** Create or replace the current user's availability. */
     @put op upsert(@body body: AvailabilityUpdate): {
       @body body: Availability;
+    };
+
+    /** List all date overrides for the current user. */
+    @get @route("overrides") op listOverrides(): {
+      @body body: DateOverride[];
+    };
+
+    /** Create or update a date override (upsert by userId + date). */
+    @post @route("overrides") op createOverride(@body body: DateOverrideCreate): {
+      @statusCode _: 201;
+      @body body: DateOverride;
+    };
+
+    /** Delete a date override by ID. */
+    @delete @route("overrides/{overrideId}") op deleteOverride(
+      @path overrideId: safeint,
+    ): {
+      @statusCode _: 204;
     };
   }
 

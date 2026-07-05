@@ -33,6 +33,51 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AvailabilityUpdate'
+  /api/availability/overrides:
+    get:
+      operationId: AvailabilityRoutes_listOverrides
+      description: List all date overrides for the current user.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DateOverride'
+    post:
+      operationId: AvailabilityRoutes_createOverride
+      description: Create or update a date override (upsert by userId + date).
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateOverride'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateOverrideCreate'
+  /api/availability/overrides/{overrideId}:
+    delete:
+      operationId: AvailabilityRoutes_deleteOverride
+      description: Delete a date override by ID.
+      parameters:
+        - name: overrideId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
   /api/book/{username}/{slug}:
     post:
       operationId: Book_create
@@ -331,6 +376,61 @@ components:
           type: string
           format: email
           description: Guest's email address.
+    DateOverride:
+      type: object
+      required:
+        - id
+        - date
+        - type
+        - userId
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        date:
+          type: string
+          format: date
+          description: Date in YYYY-MM-DD format (host's timezone).
+        type:
+          type: string
+          pattern: ^(blocked|custom)$
+          description: 'Override type: "blocked" or "custom".'
+        start:
+          type: string
+          pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          description: Start time in HH:mm format (host's timezone). Required when type is "custom".
+        end:
+          type: string
+          pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          description: End time in HH:mm format (host's timezone). Required when type is "custom".
+        userId:
+          type: string
+          description: The user this override belongs to.
+          readOnly: true
+      description: A date-specific override for a host's availability (block entire day or set custom hours).
+    DateOverrideCreate:
+      type: object
+      required:
+        - date
+        - type
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date in YYYY-MM-DD format (host's timezone).
+        type:
+          type: string
+          pattern: ^(blocked|custom)$
+          description: 'Override type: "blocked" or "custom".'
+        start:
+          type: string
+          pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          description: Start time in HH:mm format (host's timezone). Required when type is "custom".
+        end:
+          type: string
+          pattern: ^([01]\d|2[0-3]):[0-5]\d$
+          description: End time in HH:mm format (host's timezone). Required when type is "custom".
     EventType:
       type: object
       required:

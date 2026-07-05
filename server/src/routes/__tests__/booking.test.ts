@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import request from "supertest";
 import { getDb } from "../../db/index.js";
-import { users, eventTypes, availability, bookings } from "../../db/schema.js";
-import { createTestApp } from "../../test/helpers.js";
-import { setupTestDb } from "../../test/helpers.js";
+import { users, eventTypes, availability, bookings, dateOverrides } from "../../db/schema.js";
+import { createTestApp, setupTestDb } from "../../test/helpers.js";
 
 const FROM = "2026-07-06T00%3A00%3A00Z";
 const TO = "2026-07-07T00%3A00%3A00Z";
@@ -12,6 +11,27 @@ const BOOKED_7_8 = "2026-07-06T07:00:00.000Z";
 const BOOKED_END_7_8 = "2026-07-06T08:00:00.000Z";
 
 const app = createTestApp();
+
+function seedEventTypeAndAvailability() {
+  const db = getDb();
+  const et = db.insert(eventTypes)
+    .values({
+      userId: "alex",
+      title: "Meeting",
+      slug: "meeting",
+      description: null,
+      duration: 60,
+    })
+    .returning()
+    .get();
+  db.insert(availability)
+    .values({
+      userId: "alex",
+      slots: [{ dayOfWeek: 1, start: "09:00", end: "17:00" }],
+    })
+    .run();
+  return et;
+}
 
 beforeEach(() => {
   vi.useRealTimers();
@@ -36,24 +56,7 @@ describe("GET /api/book/:username/:slug/slots", () => {
   });
 
   it("returns free slots for a valid event type with availability", async () => {
-    const db = getDb();
-
-    db.insert(eventTypes)
-      .values({
-        userId: "alex",
-        title: "Meeting",
-        slug: "meeting",
-        description: null,
-        duration: 60,
-      })
-      .run();
-
-    db.insert(availability)
-      .values({
-        userId: "alex",
-        slots: [{ dayOfWeek: 1, start: "09:00", end: "17:00" }],
-      })
-      .run();
+    seedEventTypeAndAvailability();
 
     const res = await request(app).get(
       `/api/book/alex/meeting/slots?from=${FROM}&to=${TO}`,
@@ -66,27 +69,9 @@ describe("GET /api/book/:username/:slug/slots", () => {
   });
 
   it("excludes slots already booked", async () => {
+    const et = seedEventTypeAndAvailability();
+
     const db = getDb();
-
-    const et = db
-      .insert(eventTypes)
-      .values({
-        userId: "alex",
-        title: "Meeting",
-        slug: "meeting",
-        description: null,
-        duration: 60,
-      })
-      .returning()
-      .get();
-
-    db.insert(availability)
-      .values({
-        userId: "alex",
-        slots: [{ dayOfWeek: 1, start: "09:00", end: "17:00" }],
-      })
-      .run();
-
     db.insert(bookings)
       .values({
         eventTypeId: et.id,
@@ -107,30 +92,53 @@ describe("GET /api/book/:username/:slug/slots", () => {
     expect(starts).not.toContain(BOOKED_7_8);
     expect(res.body.slots).toHaveLength(7);
   });
+
+  it("returns no slots for a blocked date", async () => {
+    seedEventTypeAndAvailability();
+
+    const db = getDb();
+    db.insert(dateOverrides)
+      .values({
+        userId: "alex",
+        date: "2026-07-06",
+        type: "blocked",
+        start: null,
+        end: null,
+      })
+      .run();
+
+    const res = await request(app).get(
+      `/api/book/alex/meeting/slots?from=${FROM}&to=${TO}`,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.slots).toHaveLength(0);
+  });
+
+  it("returns slots only within custom hours for an override date", async () => {
+    seedEventTypeAndAvailability();
+
+    const db = getDb();
+    db.insert(dateOverrides)
+      .values({
+        userId: "alex",
+        date: "2026-07-06",
+        type: "custom",
+        start: "12:00",
+        end: "14:00",
+      })
+      .run();
+
+    const res = await request(app).get(
+      `/api/book/alex/meeting/slots?from=${FROM}&to=${TO}`,
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.slots).toHaveLength(2);
+  });
 });
 
 describe("POST /api/book/:username/:slug", () => {
-  function seedEventTypeAndAvailability() {
-    const db = getDb();
-
-    db.insert(eventTypes)
-      .values({
-        userId: "alex",
-        title: "Meeting",
-        slug: "meeting",
-        description: null,
-        duration: 60,
-      })
-      .run();
-
-    db.insert(availability)
-      .values({
-        userId: "alex",
-        slots: [{ dayOfWeek: 1, start: "09:00", end: "17:00" }],
-      })
-      .run();
-  }
-
   it("creates a booking and returns 201", async () => {
     seedEventTypeAndAvailability();
 
@@ -181,6 +189,56 @@ describe("POST /api/book/:username/:slug", () => {
       .post("/api/book/alex/meeting")
       .send({
         startTime: BOOKED_7_8,
+        guestName: "Test User",
+        guestEmail: "test@example.com",
+      });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when slot falls on a blocked date", async () => {
+    seedEventTypeAndAvailability();
+
+    const db = getDb();
+    db.insert(dateOverrides)
+      .values({
+        userId: "alex",
+        date: "2026-07-06",
+        type: "blocked",
+        start: null,
+        end: null,
+      })
+      .run();
+
+    const res = await request(app)
+      .post("/api/book/alex/meeting")
+      .send({
+        startTime: SLOT_7_8,
+        guestName: "Test User",
+        guestEmail: "test@example.com",
+      });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when slot is outside custom hours on a date with custom override", async () => {
+    seedEventTypeAndAvailability();
+
+    const db = getDb();
+    db.insert(dateOverrides)
+      .values({
+        userId: "alex",
+        date: "2026-07-06",
+        type: "custom",
+        start: "12:00",
+        end: "13:00",
+      })
+      .run();
+
+    const res = await request(app)
+      .post("/api/book/alex/meeting")
+      .send({
+        startTime: SLOT_7_8,
         guestName: "Test User",
         guestEmail: "test@example.com",
       });

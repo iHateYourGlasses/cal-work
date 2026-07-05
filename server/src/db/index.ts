@@ -30,6 +30,16 @@ const DDL = `
     slots TEXT NOT NULL DEFAULT '[]'
   );
 
+  CREATE TABLE IF NOT EXISTS date_overrides (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(username),
+    date TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('blocked', 'custom')),
+    start TEXT,
+    end TEXT,
+    UNIQUE(user_id, date)
+  );
+
   CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     event_type_id INTEGER NOT NULL REFERENCES event_types(id),

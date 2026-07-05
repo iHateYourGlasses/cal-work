@@ -130,9 +130,64 @@ describe("computeFreeSlots", () => {
       to: DateTime.fromISO(TUESDAY, { zone: "utc" }),
       timezone: MSK,
       minimumBookingNotice: 0,
+      dateOverrides: [],
     });
 
     expect(slots).toHaveLength(1);
     expect(slots[0]).toEqual({ start: "2026-07-06T06:00:00.000Z", end: "2026-07-06T07:00:00.000Z" });
+  });
+
+  it("returns no slots for a blocked date", () => {
+    const slots = computeFreeSlots({
+      availability: [{ dayOfWeek: 1, start: "09:00", end: "17:00" }],
+      duration: 60,
+      existingBookings: [],
+      from: DateTime.fromISO(MONDAY, { zone: "utc" }),
+      to: DateTime.fromISO(TUESDAY, { zone: "utc" }),
+      timezone: MSK,
+      minimumBookingNotice: 0,
+      dateOverrides: [{ date: "2026-07-06", type: "blocked" }],
+    });
+
+    expect(slots).toHaveLength(0);
+  });
+
+  it("generates slots only within custom hours for a date override", () => {
+    const slots = computeFreeSlots({
+      availability: [{ dayOfWeek: 1, start: "09:00", end: "17:00" }],
+      duration: 60,
+      existingBookings: [],
+      from: DateTime.fromISO(MONDAY, { zone: "utc" }),
+      to: DateTime.fromISO(TUESDAY, { zone: "utc" }),
+      timezone: MSK,
+      minimumBookingNotice: 0,
+      dateOverrides: [{ date: "2026-07-06", type: "custom", start: "12:00", end: "14:00" }],
+    });
+
+    expect(slots).toHaveLength(2);
+    expect(slots[0]).toEqual({ start: "2026-07-06T09:00:00.000Z", end: "2026-07-06T10:00:00.000Z" });
+    expect(slots[1]).toEqual({ start: "2026-07-06T10:00:00.000Z", end: "2026-07-06T11:00:00.000Z" });
+  });
+
+  it("applies overrides per-day while keeping weekly rules for other days", () => {
+    const slots = computeFreeSlots({
+      availability: [
+        { dayOfWeek: 1, start: "09:00", end: "10:00" },
+        { dayOfWeek: 2, start: "09:00", end: "10:00" },
+      ],
+      duration: 60,
+      existingBookings: [],
+      from: DateTime.fromISO(MONDAY, { zone: "utc" }),
+      to: DateTime.fromISO(WEDNESDAY, { zone: "utc" }),
+      timezone: MSK,
+      minimumBookingNotice: 0,
+      dateOverrides: [
+        { date: "2026-07-06", type: "blocked" },
+        { date: "2026-07-07", type: "custom", start: "12:00", end: "13:00" },
+      ],
+    });
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0]).toEqual({ start: "2026-07-07T09:00:00.000Z", end: "2026-07-07T10:00:00.000Z" });
   });
 });

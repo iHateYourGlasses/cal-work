@@ -27,3 +27,7 @@ _Avoid_: Schedule, working hours
 **Slot**:
 A concrete free time interval, computed from Availability minus existing Bookings.
 _Avoid_: Window, timeslot
+
+**Override**:
+A date-specific deviation from the weekly Availability: block an entire day or set custom hours.
+_Avoid_: Exception, date override

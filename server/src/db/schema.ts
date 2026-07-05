@@ -32,6 +32,21 @@ export const availability = sqliteTable("availability", {
   slots: text("slots", { mode: "json" }).$type<AvailabilitySlotRow[]>().notNull().default([]),
 });
 
+export const dateOverrides = sqliteTable(
+  "date_overrides",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.username),
+    date: text("date").notNull(),
+    type: text("type", { enum: ["blocked", "custom"] }).notNull(),
+    start: text("start"),
+    end: text("end"),
+  },
+  (table) => [unique().on(table.userId, table.date)],
+);
+
 export const bookings = sqliteTable("bookings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   eventTypeId: integer("event_type_id")

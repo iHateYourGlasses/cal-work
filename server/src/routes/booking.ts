@@ -2,7 +2,7 @@ import { Router } from "express";
 import { eq, and, lt, gt } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { getDb } from "../db/index.js";
-import { users, eventTypes, availability, bookings } from "../db/schema.js";
+import { users, eventTypes, availability, bookings, dateOverrides } from "../db/schema.js";
 import { computeFreeSlots } from "../services/slotService.js";
 
 export const bookingRouter = Router();
@@ -63,6 +63,12 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
       )
       .all();
 
+    const overrides = getDb()
+      .select({ date: dateOverrides.date, type: dateOverrides.type, start: dateOverrides.start, end: dateOverrides.end })
+      .from(dateOverrides)
+      .where(eq(dateOverrides.userId, username))
+      .all();
+
     const slots = computeFreeSlots({
       availability: (avail?.slots as any[]) ?? [],
       duration: eventType.duration,
@@ -71,6 +77,12 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
       to,
       minimumBookingNotice: eventType.minimumBookingNotice,
       timezone: user.timezone,
+      dateOverrides: overrides.map((o) => ({
+        date: o.date,
+        type: o.type,
+        start: o.start ?? undefined,
+        end: o.end ?? undefined,
+      })),
     });
 
     res.json({
@@ -146,6 +158,36 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
     if (overlapping) {
       res.status(409).json({ message: "This slot is already booked" });
       return;
+    }
+
+    const slotStartInHostTz = slotStart.setZone(user.timezone);
+    const dateStr = slotStartInHostTz.toISODate()!;
+
+    const override = getDb()
+      .select()
+      .from(dateOverrides)
+      .where(
+        and(
+          eq(dateOverrides.userId, username),
+          eq(dateOverrides.date, dateStr),
+        ),
+      )
+      .get();
+
+    if (override?.type === "blocked") {
+      res.status(400).json({ message: "This date is blocked" });
+      return;
+    }
+
+    if (override?.type === "custom" && override.start && override.end) {
+      const slotEndInHostTz = slotEnd.setZone(user.timezone);
+      const slotStartStr = slotStartInHostTz.toFormat("HH:mm");
+      const slotEndStr = slotEndInHostTz.toFormat("HH:mm");
+
+      if (slotStartStr < override.start || slotEndStr > override.end) {
+        res.status(400).json({ message: "Slot is outside custom hours for this date" });
+        return;
+      }
     }
 
     const row = getDb()

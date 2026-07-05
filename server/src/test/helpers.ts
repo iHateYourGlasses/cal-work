@@ -6,6 +6,7 @@ export function setupTestDb() {
   const sqlite = getSqlite();
   sqlite.exec(`
     DELETE FROM bookings;
+    DELETE FROM date_overrides;
     DELETE FROM availability;
     DELETE FROM event_types;
     DELETE FROM users;

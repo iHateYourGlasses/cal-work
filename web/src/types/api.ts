@@ -22,6 +22,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/availability/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List all date overrides for the current user. */
+        get: operations["AvailabilityRoutes_listOverrides"];
+        put?: never;
+        /** @description Create or update a date override (upsert by userId + date). */
+        post: operations["AvailabilityRoutes_createOverride"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/availability/overrides/{overrideId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Delete a date override by ID. */
+        delete: operations["AvailabilityRoutes_deleteOverride"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/book/{username}/{slug}": {
         parameters: {
             query?: never;
@@ -199,6 +234,37 @@ export interface components {
              */
             guestEmail: string;
         };
+        /** @description A date-specific override for a host's availability (block entire day or set custom hours). */
+        DateOverride: {
+            /** Format: int64 */
+            readonly id: number;
+            /**
+             * Format: date
+             * @description Date in YYYY-MM-DD format (host's timezone).
+             */
+            date: string;
+            /** @description Override type: "blocked" or "custom". */
+            type: string;
+            /** @description Start time in HH:mm format (host's timezone). Required when type is "custom". */
+            start?: string;
+            /** @description End time in HH:mm format (host's timezone). Required when type is "custom". */
+            end?: string;
+            /** @description The user this override belongs to. */
+            readonly userId: string;
+        };
+        DateOverrideCreate: {
+            /**
+             * Format: date
+             * @description Date in YYYY-MM-DD format (host's timezone).
+             */
+            date: string;
+            /** @description Override type: "blocked" or "custom". */
+            type: string;
+            /** @description Start time in HH:mm format (host's timezone). Required when type is "custom". */
+            start?: string;
+            /** @description End time in HH:mm format (host's timezone). Required when type is "custom". */
+            end?: string;
+        };
         /** @description A meeting template created by the host. */
         EventType: {
             /** Format: int64 */
@@ -298,6 +364,70 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Availability"];
                 };
+            };
+        };
+    };
+    AvailabilityRoutes_listOverrides: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DateOverride"][];
+                };
+            };
+        };
+    };
+    AvailabilityRoutes_createOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DateOverrideCreate"];
+            };
+        };
+        responses: {
+            /** @description The request has succeeded and a new resource has been created as a result. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DateOverride"];
+                };
+            };
+        };
+    };
+    AvailabilityRoutes_deleteOverride: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                overrideId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description There is no content to send for this request, but the headers may be useful. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -429,8 +559,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description The request has succeeded. */
-            200: {
+            /** @description The request has succeeded and a new resource has been created as a result. */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

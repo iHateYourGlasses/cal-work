@@ -16,6 +16,13 @@ export interface Slot {
   end: string;
 }
 
+export interface DateOverride {
+  date: string;
+  type: "blocked" | "custom";
+  start?: string;
+  end?: string;
+}
+
 export function computeFreeSlots(params: {
   availability: AvailabilityRule[];
   duration: number;
@@ -24,8 +31,9 @@ export function computeFreeSlots(params: {
   to: DateTime;
   timezone: string;
   minimumBookingNotice: number;
+  dateOverrides?: DateOverride[];
 }): Slot[] {
-  const { availability, duration, existingBookings, from, to, timezone, minimumBookingNotice } = params;
+  const { availability, duration, existingBookings, from, to, timezone, minimumBookingNotice, dateOverrides = [] } = params;
 
   const cutoffTime = DateTime.utc().plus({ minutes: minimumBookingNotice });
 
@@ -36,8 +44,20 @@ export function computeFreeSlots(params: {
   while (current <= lastDay) {
     const inHostTz = current.setZone(timezone);
     const dayOfWeek = inHostTz.weekday;
+    const dateStr = inHostTz.toISODate();
 
-    const rules = availability.filter((r) => r.dayOfWeek === dayOfWeek);
+    const override = dateOverrides.find((o) => o.date === dateStr);
+    if (override?.type === "blocked") {
+      current = current.plus({ days: 1 });
+      continue;
+    }
+
+    let rules: { start: string; end: string }[];
+    if (override?.type === "custom" && override.start && override.end) {
+      rules = [{ start: override.start, end: override.end }];
+    } else {
+      rules = availability.filter((r) => r.dayOfWeek === dayOfWeek);
+    }
 
     for (const rule of rules) {
       const [startH, startM] = rule.start.split(":").map(Number);
