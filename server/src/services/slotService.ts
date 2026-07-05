@@ -1,7 +1,5 @@
 import { DateTime } from "luxon";
 
-export const HOST_TIMEZONE = "Europe/Moscow";
-
 export interface AvailabilityRule {
   dayOfWeek: number;
   start: string;
@@ -24,15 +22,19 @@ export function computeFreeSlots(params: {
   existingBookings: ExistingBooking[];
   from: DateTime;
   to: DateTime;
+  timezone: string;
+  minimumBookingNotice: number;
 }): Slot[] {
-  const { availability, duration, existingBookings, from, to } = params;
+  const { availability, duration, existingBookings, from, to, timezone, minimumBookingNotice } = params;
+
+  const cutoffTime = DateTime.utc().plus({ minutes: minimumBookingNotice });
 
   const slots: Slot[] = [];
   let current = from.startOf("day");
   const lastDay = to.startOf("day");
 
   while (current <= lastDay) {
-    const inHostTz = current.setZone(HOST_TIMEZONE);
+    const inHostTz = current.setZone(timezone);
     const dayOfWeek = inHostTz.weekday;
 
     const rules = availability.filter((r) => r.dayOfWeek === dayOfWeek);
@@ -49,7 +51,7 @@ export function computeFreeSlots(params: {
         const slotEnd = slotStart.plus({ minutes: duration });
         if (slotEnd > windowEnd) break;
 
-        if (slotEnd > from && slotStart < to) {
+        if (slotEnd > from && slotStart < to && slotStart >= cutoffTime) {
           const overlaps = existingBookings.some((b) => {
             const bStart = DateTime.fromISO(b.startTime, { zone: "utc" });
             const bEnd = DateTime.fromISO(b.endTime, { zone: "utc" });

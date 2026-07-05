@@ -20,6 +20,7 @@ sqlite.exec(`
     slug TEXT NOT NULL,
     description TEXT,
     duration INTEGER NOT NULL,
+    minimum_booking_notice INTEGER NOT NULL DEFAULT 240,
     UNIQUE(user_id, slug)
   );
 
@@ -39,6 +40,12 @@ sqlite.exec(`
     created_at TEXT NOT NULL
   );
 `);
+
+try {
+  sqlite.exec(`ALTER TABLE event_types ADD COLUMN minimum_booking_notice INTEGER NOT NULL DEFAULT 240`);
+} catch {
+  // column already exists
+}
 
 export const db = drizzle(sqlite, { schema });
 

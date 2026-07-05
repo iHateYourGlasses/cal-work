@@ -3,7 +3,7 @@ import { eq, and, lt, gt } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { db } from "../db/index.js";
 import { users, eventTypes, availability, bookings } from "../db/schema.js";
-import { computeFreeSlots, HOST_TIMEZONE } from "../services/slotService.js";
+import { computeFreeSlots } from "../services/slotService.js";
 
 export const bookingRouter = Router();
 
@@ -69,6 +69,8 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
       existingBookings,
       from,
       to,
+      minimumBookingNotice: eventType.minimumBookingNotice,
+      timezone: user.timezone,
     });
 
     res.json({
@@ -80,7 +82,7 @@ bookingRouter.get("/book/:username/:slug/slots", (req, res, next) => {
         duration: eventType.duration,
         userId: eventType.userId,
       },
-      timezone: HOST_TIMEZONE,
+      timezone: user.timezone,
       slots,
     });
   } catch (err) {
@@ -122,7 +124,12 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
 
     const slotStart = DateTime.fromISO(startTime, { zone: "utc" });
     const slotEnd = slotStart.plus({ minutes: eventType.duration });
-    const now = DateTime.utc().toISO()!;
+    const now = DateTime.utc();
+
+    if (slotStart < now.plus({ minutes: eventType.minimumBookingNotice })) {
+      res.status(400).json({ message: "Slot is too soon. Minimum booking notice required." });
+      return;
+    }
 
     const overlapping = db
       .select()
@@ -149,7 +156,7 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
         guestEmail,
         startTime: slotStart.toISO()!,
         endTime: slotEnd.toISO()!,
-        createdAt: now,
+        createdAt: now.toISO()!,
       })
       .returning()
       .get();

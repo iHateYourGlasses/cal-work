@@ -18,6 +18,7 @@ export const eventTypes = sqliteTable(
     slug: text("slug").notNull(),
     description: text("description"),
     duration: integer("duration").notNull(),
+    minimumBookingNotice: integer("minimum_booking_notice").notNull().default(240),
   },
   (table) => [unique().on(table.userId, table.slug)],
 );
