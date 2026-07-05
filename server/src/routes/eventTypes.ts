@@ -20,7 +20,7 @@ eventTypesRouter.get("/", (_req, res, next) => {
         id: r.id,
         title: r.title,
         slug: r.slug,
-        description: r.description,
+        description: r.description ?? undefined,
         duration: r.duration,
         userId: r.userId,
       })),
@@ -50,7 +50,7 @@ eventTypesRouter.post("/", (req, res, next) => {
       id: row.id,
       title: row.title,
       slug: row.slug,
-      description: row.description,
+      description: row.description ?? undefined,
       duration: row.duration,
       userId: row.userId,
     });
@@ -78,7 +78,7 @@ eventTypesRouter.get("/:eventTypeId", (req, res, next) => {
       id: row.id,
       title: row.title,
       slug: row.slug,
-      description: row.description,
+      description: row.description ?? undefined,
       duration: row.duration,
       userId: row.userId,
     });
@@ -118,7 +118,7 @@ eventTypesRouter.patch("/:eventTypeId", (req, res, next) => {
       id: row.id,
       title: row.title,
       slug: row.slug,
-      description: row.description,
+      description: row.description ?? undefined,
       duration: row.duration,
       userId: row.userId,
     });
