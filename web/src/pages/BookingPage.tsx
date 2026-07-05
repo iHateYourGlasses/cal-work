@@ -16,12 +16,16 @@ import {
   ScrollArea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { api } from "../api/client";
 import type { paths } from "../types/api";
 
 type Slot = { start: string; end: string };
 type EventTypeInfo =
   paths["/api/book/{username}/{slug}/slots"]["get"]["responses"]["200"]["content"]["application/json"]["eventType"];
+
+dayjs.extend(utc);
 
 export function BookingPage() {
   const { username, slug } = useParams<{ username: string; slug: string }>();
@@ -75,23 +79,9 @@ export function BookingPage() {
     }
   }, [dates, selectedDate]);
 
-  const formatTime = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "UTC",
-    });
-  };
+  const formatTime = (iso: string) => dayjs.utc(iso).format("HH:mm");
 
-  const formatDate = (dateKey: string) => {
-    const d = new Date(dateKey + "T00:00:00");
-    return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const formatDate = (dateKey: string) => dayjs.utc(dateKey).format("ddd, MMM D");
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,11 +148,7 @@ export function BookingPage() {
         <Box>
           <Card withBorder mb="md" bg="blue.0">
             <Text fw={600}>
-              {new Date(selectedSlot.start).toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
+              {dayjs.utc(selectedSlot.start).format("dddd, MMMM D")}
               {" — "}
               {formatTime(selectedSlot.start)} - {formatTime(selectedSlot.end)}{" "}
               {timezone ? `(${timezone})` : ""}

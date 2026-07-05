@@ -43,14 +43,7 @@ export function AvailabilityEditor() {
       .getAvailability()
       .then((data) => {
         if (data?.slots) {
-          setSlots(
-            data.slots.map(
-              (s: { dayOfWeek: number; start: string; end: string }) => ({
-                ...s,
-                dayOfWeek: s.dayOfWeek,
-              }),
-            ),
-          );
+          setSlots(data.slots);
         }
       })
       .catch(() => {

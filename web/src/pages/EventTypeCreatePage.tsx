@@ -29,10 +29,11 @@ export function EventTypeCreatePage() {
   const [duration, setDuration] = useState<string | null>("30");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
 
   const handleTitleChange = (val: string) => {
     setTitle(val);
-    if (!slug || slug === slugify(title)) {
+    if (!isSlugManuallyEdited) {
       setSlug(slugify(val));
     }
   };
@@ -91,7 +92,10 @@ export function EventTypeCreatePage() {
             label="Slug"
             placeholder="30min"
             value={slug}
-            onChange={(e) => setSlug(slugify(e.currentTarget.value))}
+            onChange={(e) => {
+              setSlug(slugify(e.currentTarget.value));
+              setIsSlugManuallyEdited(true);
+            }}
             required
             description="URL-friendly identifier (letters, numbers, hyphens)"
           />

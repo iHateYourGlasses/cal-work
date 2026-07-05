@@ -12,8 +12,12 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconCircleCheck } from "@tabler/icons-react";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { api } from "../api/client";
 import type { paths } from "../types/api";
+
+dayjs.extend(utc);
 
 type BookingData =
   paths["/api/bookings/{bookingId}"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -56,8 +60,8 @@ export function ConfirmedPage() {
     );
   }
 
-  const start = new Date(booking.startTime);
-  const end = new Date(booking.endTime);
+  const start = dayjs.utc(booking.startTime);
+  const end = dayjs.utc(booking.endTime);
 
   return (
     <Container size="xs" py="xl">
@@ -77,26 +81,13 @@ export function ConfirmedPage() {
           <Stack gap="xs">
             <Text>
               <strong>When:</strong>{" "}
-              {start.toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {start.format("dddd, MMMM D, YYYY")}
             </Text>
             <Text>
               <strong>Time:</strong>{" "}
-              {start.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "UTC",
-              })}
+              {start.format("HH:mm")}
               {" — "}
-              {end.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                timeZone: "UTC",
-              })}
+              {end.format("HH:mm")}
               {" UTC"}
             </Text>
             <Text>
