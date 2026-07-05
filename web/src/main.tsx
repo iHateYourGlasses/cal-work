@@ -8,6 +8,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { AvailabilityPage } from "./pages/AvailabilityPage";
 import { EventTypeCreatePage } from "./pages/EventTypeCreatePage";
 import { BookingPage } from "./pages/BookingPage";
+import { BookingsPage } from "./pages/BookingsPage";
 import { ConfirmedPage } from "./pages/ConfirmedPage";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
@@ -24,6 +25,10 @@ createRoot(document.getElementById("root")!).render(
             <Route
               path="/dashboard/availability"
               element={<AvailabilityPage />}
+            />
+            <Route
+              path="/dashboard/bookings"
+              element={<BookingsPage />}
             />
             <Route
               path="/dashboard/event-types/new"

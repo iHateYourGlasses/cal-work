@@ -176,6 +176,50 @@ bookingRouter.post("/book/:username/:slug", (req, res, next) => {
   }
 });
 
+bookingRouter.get("/bookings", (req, res, next) => {
+  try {
+    const user = db.select().from(users).where(eq(users.username, "alex")).get();
+
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const all = db
+      .select({
+        booking: bookings,
+        eventType: eventTypes,
+      })
+      .from(bookings)
+      .innerJoin(eventTypes, eq(bookings.eventTypeId, eventTypes.id))
+      .where(eq(eventTypes.userId, "alex"))
+      .orderBy(bookings.startTime)
+      .all();
+
+    res.json(
+      all.map(({ booking, eventType }) => ({
+        id: booking.id,
+        eventTypeId: booking.eventTypeId,
+        eventType: {
+          id: eventType.id,
+          title: eventType.title,
+          slug: eventType.slug,
+          description: eventType.description,
+          duration: eventType.duration,
+          userId: eventType.userId,
+        },
+        guestName: booking.guestName,
+        guestEmail: booking.guestEmail,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        createdAt: booking.createdAt,
+      })),
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
 bookingRouter.get("/bookings/:bookingId", (req, res, next) => {
   try {
     const bookingId = Number(req.params.bookingId);

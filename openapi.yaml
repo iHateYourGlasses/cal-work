@@ -97,6 +97,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SlotsResponse'
+  /api/bookings:
+    get:
+      operationId: Bookings_list
+      description: List all bookings for the current user.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
   /api/bookings/{bookingId}:
     get:
       operationId: Bookings_read

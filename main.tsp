@@ -282,6 +282,11 @@ namespace CalWorkApi {
 
   @route("/api/bookings")
   namespace Bookings {
+    /** List all bookings for the current user. */
+    @get op list(): {
+      @body body: Booking[];
+    };
+
     /** Get booking details by ID. */
     @get @route("{bookingId}") op read(
       @path bookingId: safeint,

@@ -9,6 +9,8 @@ type BookingCreated =
   paths["/api/book/{username}/{slug}"]["post"]["responses"]["201"]["content"]["application/json"];
 type BookingRead =
   paths["/api/bookings/{bookingId}"]["get"]["responses"]["200"]["content"]["application/json"];
+type BookingsList =
+  paths["/api/bookings"]["get"]["responses"]["200"]["content"]["application/json"];
 type EventTypeList =
   paths["/api/event-types"]["get"]["responses"]["200"]["content"]["application/json"];
 type EventTypeSingle =
@@ -88,7 +90,9 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  // ── Booking Read ───────────────────────────────
+  // ── Bookings ──────────────────────────────────────
+
+  getBookings: () => request<BookingsList>("/bookings"),
 
   fetchBooking: (bookingId: number) =>
     request<BookingRead>(`/bookings/${bookingId}`),

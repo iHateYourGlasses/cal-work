@@ -1,10 +1,11 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppShell, Group, Text, NavLink, Stack } from "@mantine/core";
-import { IconCalendarEvent, IconClock } from "@tabler/icons-react";
+import { IconCalendarEvent, IconClock, IconCalendarTime } from "@tabler/icons-react";
 
 const NAV_ITEMS = [
   { label: "Event Types", path: "/dashboard", icon: IconCalendarEvent },
   { label: "Availability", path: "/dashboard/availability", icon: IconClock },
+  { label: "Bookings", path: "/dashboard/bookings", icon: IconCalendarTime },
 ];
 
 export function Layout() {
