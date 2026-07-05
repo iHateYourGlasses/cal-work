@@ -16,10 +16,6 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use("/api/event-types", eventTypesRouter);
-app.use("/api/availability", availabilityRouter);
-app.use("/api", bookingRouter);
-
 app.use(
   middleware({
     apiSpec: "../openapi.yaml",
@@ -27,6 +23,10 @@ app.use(
     validateResponses: true,
   }),
 );
+
+app.use("/api/event-types", eventTypesRouter);
+app.use("/api/availability", availabilityRouter);
+app.use("/api", bookingRouter);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   res.status(err.status ?? 500).json({
