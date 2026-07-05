@@ -1,5 +1,6 @@
 import { Container, Title } from "@mantine/core";
 import { AvailabilityEditor } from "../components/AvailabilityEditor";
+import { OverrideEditor } from "../components/OverrideEditor";
 
 export function AvailabilityPage() {
   return (
@@ -8,6 +9,7 @@ export function AvailabilityPage() {
         Availability
       </Title>
       <AvailabilityEditor />
+      <OverrideEditor />
     </Container>
   );
 }

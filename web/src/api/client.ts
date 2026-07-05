@@ -17,6 +17,10 @@ type EventTypeSingle =
   paths["/api/event-types/{eventTypeId}"]["get"]["responses"]["200"]["content"]["application/json"];
 type AvailabilityData =
   paths["/api/availability"]["get"]["responses"]["200"]["content"]["application/json"];
+type OverrideList =
+  paths["/api/availability/overrides"]["get"]["responses"]["200"]["content"]["application/json"];
+type OverrideCreated =
+  paths["/api/availability/overrides"]["post"]["responses"]["201"]["content"]["application/json"];
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(BASE + url, {
@@ -72,6 +76,22 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+
+  getOverrides: () => request<OverrideList>("/availability/overrides"),
+
+  createOverride: (body: {
+    date: string;
+    type: string;
+    start?: string;
+    end?: string;
+  }) =>
+    request<OverrideCreated>("/availability/overrides", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  deleteOverride: (id: number) =>
+    request<void>(`/availability/overrides/${id}`, { method: "DELETE" }),
 
   // ── Booking ────────────────────────────────────
 
