@@ -7,6 +7,7 @@ import { Layout } from "./components/Layout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { AvailabilityPage } from "./pages/AvailabilityPage";
 import { EventTypeCreatePage } from "./pages/EventTypeCreatePage";
+import { EventTypeEditPage } from "./pages/EventTypeEditPage";
 import { BookingPage } from "./pages/BookingPage";
 import { BookingsPage } from "./pages/BookingsPage";
 import { ConfirmedPage } from "./pages/ConfirmedPage";
@@ -33,6 +34,10 @@ createRoot(document.getElementById("root")!).render(
             <Route
               path="/dashboard/event-types/new"
               element={<EventTypeCreatePage />}
+            />
+            <Route
+              path="/dashboard/event-types/:id/edit"
+              element={<EventTypeEditPage />}
             />
             <Route path="/book/:username/:slug" element={<BookingPage />} />
             <Route

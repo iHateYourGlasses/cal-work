@@ -9,9 +9,11 @@ import {
   Loader,
   ThemeIcon,
   Stack,
+  Button,
+  Group,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconCircleCheck } from "@tabler/icons-react";
+import { IconCircleCheck, IconBrandGoogle, IconCalendarDown } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { api } from "../api/client";
@@ -63,6 +65,41 @@ export function ConfirmedPage() {
   const start = dayjs.utc(booking.startTime);
   const end = dayjs.utc(booking.endTime);
 
+  const gcalFormat = (d: dayjs.Dayjs) => d.format("YYYYMMDDTHHmmss") + "Z";
+
+  const googleCalendarUrl = [
+    "https://calendar.google.com/calendar/render?action=TEMPLATE",
+    `&text=${encodeURIComponent(booking.eventType?.title ?? "Meeting")}`,
+    `&dates=${gcalFormat(start)}/${gcalFormat(end)}`,
+    `&details=${encodeURIComponent(`Booked by ${booking.guestName} (${booking.guestEmail})`)}`,
+  ].join("");
+
+  const icsContent = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//cal-work//EN",
+    "BEGIN:VEVENT",
+    `DTSTART:${gcalFormat(start)}`,
+    `DTEND:${gcalFormat(end)}`,
+    `SUMMARY:${booking.eventType?.title ?? "Meeting"}`,
+    `DESCRIPTION:Booked by ${booking.guestName} (${booking.guestEmail})`,
+    `UID:booking-${booking.id}@cal-work`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const downloadIcs = () => {
+    const blob = new Blob([icsContent], {
+      type: "text/calendar;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${booking.eventType?.slug ?? "event"}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Container size="xs" py="xl">
       <Stack align="center" ta="center">
@@ -99,10 +136,24 @@ export function ConfirmedPage() {
           </Stack>
         </Card>
 
-        <Text size="sm" c="dimmed">
-          A confirmation has been sent to your email (not really — MVP,
-          remember?).
-        </Text>
+        <Stack gap="sm" w="100%">
+          <Button
+            component="a"
+            href={googleCalendarUrl}
+            target="_blank"
+            leftSection={<IconBrandGoogle size={18} />}
+            variant="outline"
+          >
+            Add to Google Calendar
+          </Button>
+          <Button
+            leftSection={<IconCalendarDown size={18} />}
+            variant="outline"
+            onClick={downloadIcs}
+          >
+            Download .ics file
+          </Button>
+        </Stack>
       </Stack>
     </Container>
   );

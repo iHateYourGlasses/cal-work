@@ -11,9 +11,11 @@ import {
   Text,
   ActionIcon,
   Box,
+  Modal,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconCopy, IconPlus } from "@tabler/icons-react";
+import { IconCopy, IconPlus, IconTrash, IconPencil } from "@tabler/icons-react";
 import { api } from "../api/client";
 import type { paths } from "../types/api";
 
@@ -24,8 +26,12 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<EventType | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteOpened, { open: openDelete, close: closeDelete }] =
+    useDisclosure(false);
 
-  useEffect(() => {
+  const loadEventTypes = () => {
     api
       .getEventTypes()
       .then(setEventTypes)
@@ -37,7 +43,9 @@ export function DashboardPage() {
         });
       })
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(loadEventTypes, []);
 
   const copyLink = (slug: string) => {
     const url = `${window.location.origin}/book/alex/${slug}`;
@@ -49,6 +57,29 @@ export function DashboardPage() {
       .catch(() => {
         prompt("Copy this link:", url);
       });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteEventType(deleteTarget.id);
+      notifications.show({
+        title: "Deleted",
+        message: `"${deleteTarget.title}" removed`,
+        color: "green",
+      });
+      setEventTypes((prev) => prev.filter((et) => et.id !== deleteTarget.id));
+      closeDelete();
+    } catch (err) {
+      notifications.show({
+        title: "Error",
+        message: String(err),
+        color: "red",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -77,7 +108,12 @@ export function DashboardPage() {
       ) : (
         <Stack>
           {eventTypes.map((et) => (
-            <Card key={et.slug} withBorder>
+            <Card
+              key={et.id}
+              withBorder
+              style={{ cursor: "pointer" }}
+              onClick={() => navigate(`/dashboard/event-types/${et.id}/edit`)}
+            >
               <Group justify="space-between" wrap="nowrap">
                 <Box>
                   <Group gap="xs" mb={4}>
@@ -90,19 +126,66 @@ export function DashboardPage() {
                     /book/alex/{et.slug}
                   </Text>
                 </Box>
-                <ActionIcon
-                  variant="subtle"
-                  color="blue"
-                  onClick={() => copyLink(et.slug)}
-                  title="Copy booking link"
-                >
-                  <IconCopy size={18} />
-                </ActionIcon>
+                <Group gap={4} wrap="nowrap">
+                  <ActionIcon
+                    variant="subtle"
+                    color="blue"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/dashboard/event-types/${et.id}/edit`);
+                    }}
+                    title="Edit"
+                  >
+                    <IconPencil size={18} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="subtle"
+                    color="blue"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyLink(et.slug);
+                    }}
+                    title="Copy booking link"
+                  >
+                    <IconCopy size={18} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(et);
+                      openDelete();
+                    }}
+                    title="Delete"
+                  >
+                    <IconTrash size={18} />
+                  </ActionIcon>
+                </Group>
               </Group>
             </Card>
           ))}
         </Stack>
       )}
+      <Modal
+        opened={deleteOpened}
+        onClose={closeDelete}
+        title="Delete Event Type"
+        centered
+      >
+        <Text mb="lg">
+          Are you sure you want to delete "{deleteTarget?.title}"? This cannot
+          be undone.
+        </Text>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={closeDelete}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={handleDelete} loading={deleting}>
+            Delete
+          </Button>
+        </Group>
+      </Modal>
     </Container>
   );
 }
